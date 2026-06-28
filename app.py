@@ -1,4 +1,5 @@
-import streamlit as st
+# Use auto_adjust=True to ensure you get consistent column names
+df = yf.download(ticker_a, start=start_date, end=end_date, auto_adjust=True)import streamlit as st
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -221,12 +222,14 @@ else:
     # --- Risk Management Engine (with Zombie Liquidation) ---
 MAX_TRADE_DURATION = 20  # Max days to hold a position
 days_in_trade = 0
-# Ensure df is defined and not empty before looping
-# 1. First, make sure 'df' actually exists
+# 1. Protection Block
 if 'df' in locals() and df is not None and not df.empty:
-    
-    # 2. Now run your loop safely
+    # Everything inside this loop is safe
     for idx, row in df.iterrows():
+        # --- Z-Score and current_state logic goes here ---
+        if current_state != 0:
+            days_in_trade += 1
+            
         # ZOMBIE LIQUIDATION RULE:
         if days_in_trade >= MAX_TRADE_DURATION:
             current_state = 0
@@ -235,21 +238,13 @@ if 'df' in locals() and df is not None and not df.empty:
         else:
             days_in_trade = 0
             
-    # 3. Finally, do your calculations
+    # 2. Calculation Block (still inside the 'if' block)
     df['CumMax'] = df['Net_Asset_Value'].cummax()
     df['Drawdown'] = (df['Net_Asset_Value'] - df['CumMax']) / df['CumMax']
 
 else:
-    # If df is missing, stop the app and show a helpful error
-    st.error("Data ingestion failed. 'df' is empty or missing.")
-    st.stop()
-            
-        # ZOMBIE LIQUIDATION RULE:
-        if days_in_trade >= MAX_TRADE_DURATION:
-            # ... (your existing closure logic)
-            
-else:
-    st.error("Market data is missing. The ingestion pipeline failed.")
+    # If df is missing, we stop here instead of crashing
+    st.error("Market data is missing. Please check your ticker symbols or connection.")
     st.stop()
 
         
