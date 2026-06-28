@@ -221,24 +221,39 @@ else:
     # --- Risk Management Engine (with Zombie Liquidation) ---
 MAX_TRADE_DURATION = 20  # Max days to hold a position
 days_in_trade = 0
-
-for idx, row in df.iterrows():
-    # ... (existing z-score logic) ...
+# Ensure df is defined and not empty before looping
+# 1. First, make sure 'df' actually exists
+if 'df' in locals() and df is not None and not df.empty:
     
-    if current_state != 0:
-        days_in_trade += 1
-        
+    # 2. Now run your loop safely
+    for idx, row in df.iterrows():
         # ZOMBIE LIQUIDATION RULE:
-        # If the trade hits the duration limit, force close to free up capital
         if days_in_trade >= MAX_TRADE_DURATION:
             current_state = 0
             days_in_trade = 0
             execution_counter += 1
-    else:
-        days_in_trade = 0
-        # CALCULATE PEAK-TO-TROUGH DRAWDOWN
-df['CumMax'] = df['Net_Asset_Value'].cummax()
-df['Drawdown'] = (df['Net_Asset_Value'] - df['CumMax']) / df['CumMax']
+        else:
+            days_in_trade = 0
+            
+    # 3. Finally, do your calculations
+    df['CumMax'] = df['Net_Asset_Value'].cummax()
+    df['Drawdown'] = (df['Net_Asset_Value'] - df['CumMax']) / df['CumMax']
+
+else:
+    # If df is missing, stop the app and show a helpful error
+    st.error("Data ingestion failed. 'df' is empty or missing.")
+    st.stop()
+            
+        # ZOMBIE LIQUIDATION RULE:
+        if days_in_trade >= MAX_TRADE_DURATION:
+            # ... (your existing closure logic)
+            
+else:
+    st.error("Market data is missing. The ingestion pipeline failed.")
+    st.stop()
+
+        
+ 
 
 # VISUALIZE EQUITY VS DRAWDOWN
 fig_perf = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
@@ -256,4 +271,3 @@ if df['Position'].diff().abs().iloc[-1] > 0:
 # Display the audit log at the bottom of the dashboard
 with st.expander("📜 Strategy Audit Trail"):
     st.write(audit_log)
-    
