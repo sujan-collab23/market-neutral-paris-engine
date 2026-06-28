@@ -1,5 +1,6 @@
 # Use auto_adjust=True to ensure you get consistent column names
-df = yf.download(ticker_a, start=start_date, end=end_date, auto_adjust=True)import streamlit as st
+df = yf.download(ticker_a, start=start_date, end=end_date, auto_adjust=True)
+import streamlit as st
 import numpy as np
 import pandas as pd
 import yfinance as yf
